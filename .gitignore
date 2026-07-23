@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environment and environment variables
+.venv/
+venv/
+.env
+
+# Local database
+*.db
+*.db-journal
+
+# User-uploaded files
+static/uploads/products/*
+!static/uploads/products/.gitkeep
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Generated submission artifacts
+*.pdf
+*.pptx

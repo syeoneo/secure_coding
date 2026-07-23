@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}상품 등록 | 햇켓{% endblock %}
+{% block content %}
+<section class="product-form-page">
+  <div class="product-form-heading">
+    <span class="hatket-section-label">SELL YOUR ITEM</span>
+    <h1>상품 등록</h1>
+    <p>구매자가 상품을 정확히 판단할 수 있도록 사진과 상태를 자세히 입력해주세요.</p>
+  </div>
+  <form method="post" enctype="multipart/form-data" class="product-editor-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid two-columns">
+      <div class="form-field full-width">
+        <label for="images">상품 사진 <strong>1~5장</strong></label>
+        <input id="images" name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required>
+        <small>JPEG·PNG·WebP, 한 장당 5MB 이하. 첫 번째 사진이 대표 이미지가 됩니다.</small>
+        <div id="image-preview" class="image-preview-grid"></div>
+      </div>
+      <div class="form-field full-width"><label for="title">상품명</label><input id="title" name="title" type="text" maxlength="100" placeholder="예: 아이패드 에어 5세대" required></div>
+      <div class="form-field"><label for="category">카테고리</label><select id="category" name="category" required>{% for item in categories %}<option value="{{ item }}">{{ item }}</option>{% endfor %}</select></div>
+      <div class="form-field"><label for="condition">상품 상태</label><select id="condition" name="condition" required>{% for item in conditions %}<option value="{{ item }}">{{ item }}</option>{% endfor %}</select></div>
+      <div class="form-field"><label for="price">가격</label><input id="price" name="price" type="number" min="1" max="100000000" placeholder="가격을 입력하세요" required></div>
+      <div class="form-field"><label for="trade_method">거래 방법</label><select id="trade_method" name="trade_method" required>{% for item in trade_methods %}<option value="{{ item }}">{{ item }}</option>{% endfor %}</select></div>
+      <div class="form-field full-width"><label for="location">거래 희망 장소</label><input id="location" name="location" type="text" maxlength="100" placeholder="예: 서울대입구역 2번 출구 (선택)"></div>
+      <div class="form-field full-width checkbox-field"><label><input type="checkbox" name="negotiable" value="1"> 가격 제안 받기</label></div>
+      <div class="form-field full-width"><label for="description">상품 설명</label><textarea id="description" name="description" maxlength="2000" placeholder="구매 시기, 사용감, 하자 여부, 구성품 등을 자세히 적어주세요." required></textarea></div>
+    </div>
+    <div class="form-actions"><a href="{{ url_for('dashboard') }}" class="hatket-secondary-button">취소</a><button type="submit">상품 등록하기</button></div>
+  </form>
+</section>
+<script>
+const imageInput = document.getElementById('images');
+const preview = document.getElementById('image-preview');
+imageInput.addEventListener('change', () => {
+  preview.replaceChildren();
+  const files = Array.from(imageInput.files);
+  if (files.length > 5) { alert('상품 사진은 최대 5장까지 선택할 수 있습니다.'); imageInput.value = ''; return; }
+  files.forEach((file, index) => {
+    const box = document.createElement('div'); box.className = 'image-preview-item';
+    const img = document.createElement('img'); img.alt = `선택한 상품 사진 ${index + 1}`; img.src = URL.createObjectURL(file);
+    const label = document.createElement('span'); label.textContent = index === 0 ? '대표' : `${index + 1}`;
+    box.append(img, label); preview.appendChild(box);
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}찜한 상품 | 햇켓{% endblock %}
+{% block content %}
+<section class="list-page-heading"><span class="hatket-section-label">MY FAVORITES</span><h1>찜한 상품</h1><p>관심 있게 본 상품을 한곳에서 확인하세요.</p></section>
+{% if products %}<div class="product-grid marketplace-feed">{% for product in products %}<article class="product-card managed-product-card"><a href="{{ url_for('view_product', product_id=product.id) }}"><div class="product-thumb real-product-thumb">{% set card_image = product_image_url(product.image_filename) %}{% if card_image %}<img src="{{ card_image }}" alt="{{ product.title }}">{% else %}<div class="product-placeholder-icon">H</div>{% endif %}{% if product.status != '판매중' %}<span class="product-status-overlay">{{ product.status }}</span>{% endif %}</div><div class="product-body"><p class="product-meta-line">{{ product.category }}</p><h3 class="product-title">{{ product.title }}</h3><strong class="product-price">{{ "{:,}".format(product.price) }}원</strong><div class="product-card-bottom"><span>♡ {{ product.favorite_count }}</span><span>조회 {{ product.view_count }}</span></div></div></a></article>{% endfor %}</div>{% else %}<div class="hatket-empty-state"><div class="hatket-empty-icon">H</div><h2>아직 상품이 없어요</h2><p>메인 피드에서 상품을 둘러보세요.</p></div>{% endif %}
+{% endblock %}

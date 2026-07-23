@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}신고하기 | 햇켓{% endblock %}
+{% block content %}
+<section class="report-page">
+  <header class="report-hero">
+    <div>
+      <span class="hatket-section-label">SAFETY CENTER</span>
+      <h1>신고하기</h1>
+      <p>운영 정책을 위반한 상품 또는 사용자를 선택해주세요. 접수된 신고는 관리자가 직접 검토합니다.</p>
+    </div>
+  </header>
+
+  <div class="report-choice-grid">
+    <section class="report-choice-card">
+      <span class="report-choice-icon">P</span>
+      <div>
+        <span class="hatket-section-label">PRODUCT</span>
+        <h2>상품 신고</h2>
+        <p>허위 매물, 금지 품목, 부적절한 설명이 있는 상품을 신고합니다.</p>
+      </div>
+      {% if products %}
+      <form method="get" action="{{ url_for('report') }}" class="report-select-form">
+        <input type="hidden" name="target_type" value="product">
+        <label for="product-target">신고할 상품</label>
+        <select id="product-target" name="target_id" required>
+          <option value="">상품을 선택해주세요</option>
+          {% for product in products %}<option value="{{ product.id }}">{{ product.title }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="hatket-primary-button">상품 신고하기</button>
+      </form>
+      {% else %}
+      <div class="report-empty">신고할 수 있는 상품이 없습니다.</div>
+      {% endif %}
+    </section>
+
+    <section class="report-choice-card">
+      <span class="report-choice-icon user">U</span>
+      <div>
+        <span class="hatket-section-label">USER</span>
+        <h2>사용자 신고</h2>
+        <p>사기 유도, 욕설, 반복적인 괴롭힘 등 운영 정책을 위반한 사용자를 신고합니다.</p>
+      </div>
+      {% if users %}
+      <form method="get" action="{{ url_for('report') }}" class="report-select-form">
+        <input type="hidden" name="target_type" value="user">
+        <label for="user-target">신고할 사용자</label>
+        <select id="user-target" name="target_id" required>
+          <option value="">사용자를 선택해주세요</option>
+          {% for user in users %}<option value="{{ user.id }}">{{ user.nickname or user.username }} (@{{ user.username }})</option>{% endfor %}
+        </select>
+        <button type="submit" class="hatket-primary-button">사용자 신고하기</button>
+      </form>
+      {% else %}
+      <div class="report-empty">신고할 수 있는 사용자가 없습니다.</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <aside class="report-policy-note">
+    <strong>신고 처리 안내</strong>
+    <p>신고가 접수되는 즉시 자동 제재하지 않습니다. 관리자가 신고 사유와 대상을 확인한 뒤 승인 또는 기각하며, 처리 결과와 관리자 메모는 감사 로그에 남습니다.</p>
+  </aside>
+</section>
+{% endblock %}

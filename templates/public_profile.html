@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {{ profile_user.nickname or profile_user.username }}님의 프로필 | 햇켓
+{% endblock %}
+
+{% block content %}
+<section class="public-profile-page">
+  <section class="public-profile-hero">
+    <span class="public-profile-avatar">
+      {{ (profile_user.nickname or profile_user.username)[:1] }}
+    </span>
+
+    <div class="public-profile-main">
+      <span class="hatket-section-label">
+        USER PROFILE
+      </span>
+
+      <h1>
+        {{ profile_user.nickname or profile_user.username }}
+      </h1>
+
+      <p class="public-profile-username">
+        @{{ profile_user.username }}
+      </p>
+
+      <p class="public-profile-bio">
+        {{ profile_user.bio or '아직 소개글이 없습니다.' }}
+      </p>
+
+      <small>
+        햇켓 가입일
+        {{ profile_user.created_at[:10] if profile_user.created_at else '-' }}
+      </small>
+    </div>
+
+    {% if not is_self %}
+      <div class="public-profile-actions">
+
+        {% if is_blocked_by_me %}
+          <span class="friend-state-badge waiting">
+            차단한 사용자
+          </span>
+
+          <form
+            method="post"
+            action="{{ url_for('unblock_user', user_id=profile_user.id) }}"
+          >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button
+              type="submit"
+              class="hatket-outline-button"
+            >
+              차단 해제
+            </button>
+          </form>
+
+        {% else %}
+
+          {% if is_friend %}
+            <span class="friend-state-badge">
+              ✓ 친구
+            </span>
+
+            <form
+              method="post"
+              action="{{ url_for('start_private_chat', user_id=profile_user.id) }}"
+            >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button
+                type="submit"
+                class="hatket-primary-button"
+              >
+                1:1 채팅
+              </button>
+            </form>
+
+          {% elif incoming_request and incoming_request.status == 'pending' %}
+            <span class="friend-state-badge waiting">
+              상대방의 신청이 도착했어요
+            </span>
+
+            <a
+              href="{{ url_for('friends') }}"
+              class="hatket-primary-button"
+            >
+              신청 확인
+            </a>
+
+          {% elif outgoing_request and outgoing_request.status == 'pending' %}
+            <span class="friend-state-badge waiting">
+              친구 신청 대기 중
+            </span>
+
+          {% else %}
+            <form
+              method="post"
+              action="{{ url_for('send_friend_request', user_id=profile_user.id) }}"
+            >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button
+                type="submit"
+                class="hatket-primary-button"
+              >
+                친구 신청
+              </button>
+            </form>
+          {% endif %}
+
+          <form
+            method="post"
+            action="{{ url_for('block_user', user_id=profile_user.id) }}"
+            onsubmit="return confirm('이 사용자를 차단할까요? 친구 관계와 친구 신청도 제거됩니다.');"
+          >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button
+              type="submit"
+              class="hatket-delete-button"
+            >
+              사용자 차단
+            </button>
+          </form>
+
+        {% endif %}
+
+        <a
+          href="{{ url_for('report', target_id=profile_user.id, target_type='user') }}"
+          class="public-profile-report-button"
+        >
+          사용자 신고
+        </a>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="profile-products-section">
+    <div class="section-heading-row">
+      <div>
+        <span class="hatket-section-label">
+          MARKET
+        </span>
+
+        <h2>최근 등록 상품</h2>
+      </div>
+
+      <span class="count-badge">
+        {{ products|length }}
+      </span>
+    </div>
+
+    {% if products %}
+      <div class="product-grid">
+        {% for product in products %}
+          <a
+            href="{{ url_for('view_product', product_id=product.id) }}"
+            class="product-card"
+          >
+            <div class="product-thumb">
+              {% set card_image = product_image_url(product.image_filename) %}
+              {% if card_image %}
+                <img src="{{ card_image }}" alt="{{ product.title }}" loading="lazy">
+              {% else %}
+                <div class="product-placeholder-icon">H</div>
+              {% endif %}
+            </div>
+
+            <div class="product-body">
+              <span class="product-status-chip">
+                {{ product.status }}
+              </span>
+
+              <h3 class="product-title">
+                {{ product.title }}
+              </h3>
+
+              <strong class="product-price">
+                {{ "{:,}".format(product.price) }}원
+              </strong>
+
+              <div class="product-feed-meta">
+                <span>
+                  관심 {{ product.favorite_count }}
+                </span>
+
+                <span>
+                  조회 {{ product.view_count }}
+                </span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="compact-empty-state">
+        공개된 상품이 아직 없습니다.
+      </div>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

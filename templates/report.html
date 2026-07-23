@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ target_type_label }} 신고 | 햇켓{% endblock %}
+{% block content %}
+<section class="report-page report-compose-page">
+  <header class="report-hero compact">
+    <div>
+      <span class="hatket-section-label">REPORT {{ target_type|upper }}</span>
+      <h1>{{ target_type_label }} 신고</h1>
+      <p>신고 대상과 사유를 다시 확인해주세요.</p>
+    </div>
+  </header>
+
+  <section class="report-compose-card">
+    <div class="report-target-summary">
+      <span class="report-target-type">{{ target_type_label }}</span>
+      <div><small>신고 대상</small><strong>{{ target_name }}</strong></div>
+    </div>
+
+    <form method="post" class="report-reason-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="target_id" value="{{ target_id }}">
+      <input type="hidden" name="target_type" value="{{ target_type }}">
+      <label for="reason">신고 사유</label>
+      <textarea id="reason" name="reason" minlength="5" maxlength="500" required placeholder="문제가 된 행동이나 상품 내용을 구체적으로 작성해주세요."></textarea>
+      <small>5자 이상 500자 이하 · 허위 신고 또는 반복 신고는 제한될 수 있습니다.</small>
+      <div class="report-form-actions">
+        <a href="{{ url_for('report') }}" class="hatket-outline-button">대상 다시 선택</a>
+        <button type="submit" class="hatket-delete-button">신고 접수</button>
+      </div>
+    </form>
+  </section>
+</section>
+{% endblock %}

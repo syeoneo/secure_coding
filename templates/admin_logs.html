@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}관리자 작업 로그 | 햇켓{% endblock %}
+
+{% block content %}
+<section class="admin-page admin-ledger-page">
+  <header class="admin-hero">
+    <div>
+      <span class="hatket-section-label">AUDIT TRAIL</span>
+      <h1>관리자 작업 로그</h1>
+      <p>계정 정지·해제와 상품 숨김·복구 조치를 변경 불가능한 감사 기록처럼 조회합니다.</p>
+    </div>
+    <div class="admin-hero-actions">
+      <a href="{{ url_for('admin_transfers') }}" class="hatket-outline-button">송금 거래 내역</a>
+      <a href="{{ url_for('admin') }}" class="hatket-mint-button">관리자 홈</a>
+    </div>
+  </header>
+
+  <div class="admin-ledger-stats">
+    <article>
+      <small>누적 작업</small>
+      <strong>{{ total_count }}</strong>
+      <span>전체 감사 기록</span>
+    </article>
+    <article>
+      <small>오늘 작업</small>
+      <strong>{{ today_count }}</strong>
+      <span>오늘 발생한 조치</span>
+    </article>
+    <article>
+      <small>작업 관리자</small>
+      <strong>{{ admin_count }}</strong>
+      <span>로그에 기록된 관리자</span>
+    </article>
+  </div>
+
+  <section class="admin-panel">
+    <div class="admin-panel-head admin-panel-head-split">
+      <div>
+        <span class="hatket-section-label">LATEST 200</span>
+        <h2>감사 로그 상세</h2>
+      </div>
+      <span class="admin-ledger-caption">최신 200건 표시</span>
+    </div>
+
+    {% if logs %}
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-log-table">
+          <thead>
+            <tr>
+              <th>처리 시각</th>
+              <th>관리자</th>
+              <th>조치</th>
+              <th>대상 유형</th>
+              <th>대상</th>
+              <th>상세</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+              <tr>
+                <td><time>{{ log.created_at }}</time></td>
+                <td><strong>@{{ log.admin_username }}</strong></td>
+                <td>
+                  <span class="admin-action-badge {{ log.action_type|lower|replace('_', '-') }}">
+                    {% if log.action_type == 'USER_SUSPEND' %}계정 정지
+                    {% elif log.action_type == 'USER_RESTORE' %}정지 해제
+                    {% elif log.action_type == 'PRODUCT_HIDE' %}상품 숨김
+                    {% elif log.action_type == 'PRODUCT_RESTORE' %}상품 복구
+                    {% elif log.action_type == 'REPORT_APPROVE_USER' %}사용자 신고 승인
+                    {% elif log.action_type == 'REPORT_APPROVE_PRODUCT' %}상품 신고 승인
+                    {% elif log.action_type == 'REPORT_REJECT' %}신고 기각
+                    {% else %}{{ log.action_type }}{% endif %}
+                  </span>
+                </td>
+                <td>{% if log.target_type == 'USER' %}사용자{% elif log.target_type == 'PRODUCT' %}상품{% else %}{{ log.target_type }}{% endif %}</td>
+                <td><strong>{{ log.target_label }}</strong></td>
+                <td>{{ log.details or '-' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="admin-empty-state admin-empty-large">
+        <strong>기록된 관리자 작업이 없습니다.</strong>
+        <p>사용자 정지 또는 상품 숨김 조치를 실행하면 이곳에 자동으로 기록됩니다.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <aside class="admin-integrity-notice">
+    <strong>감사 로그 운영 원칙</strong>
+    <p>관리자 조치와 로그 저장은 하나의 데이터베이스 트랜잭션으로 처리되어, 조치만 반영되고 기록이 누락되는 상황을 줄였습니다.</p>
+  </aside>
+</section>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}햇켓 | 안전한 중고거래{% endblock %}
+{% block content %}
+<section class="hatket-hero compact-hero">
+  <div class="hatket-hero-content">
+    <span class="hatket-hero-label">SAFE SECONDHAND MARKET</span>
+    <h1>안전한 중고거래의 시작, <strong>햇켓</strong></h1>
+    <p>사진으로 상품을 확인하고, 관심 상품을 찜하고, 안전하게 대화해보세요.</p>
+  </div>
+  <a href="{{ url_for('new_product') }}" class="hatket-primary-button">+ 상품 등록하기</a>
+</section>
+
+<section class="market-section">
+  <div class="market-section-header">
+    <div>
+      <span class="hatket-section-label">MARKET FEED</span>
+      <h2>{% if query %}검색 결과{% else %}지금 올라온 상품{% endif %}</h2>
+      <p>{% if query %}<strong>“{{ query }}”</strong>에 맞는 상품이에요.{% else %}사진을 눌러 상품의 자세한 정보를 확인하세요.{% endif %}</p>
+    </div>
+  </div>
+
+  <form method="get" action="{{ url_for('dashboard') }}" class="feed-filter-form">
+    <input type="hidden" name="q" value="{{ query }}">
+    <select name="category" aria-label="카테고리">
+      <option value="">전체 카테고리</option>
+      {% for category in categories %}
+      <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+      {% endfor %}
+    </select>
+    <select name="status" aria-label="판매 상태">
+      {% for value in ['판매중', '예약중', '판매완료', '전체'] %}
+      <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ value }}</option>
+      {% endfor %}
+    </select>
+    <select name="sort" aria-label="정렬">
+      <option value="latest" {% if selected_sort == 'latest' %}selected{% endif %}>최신순</option>
+      <option value="popular" {% if selected_sort == 'popular' %}selected{% endif %}>관심순</option>
+      <option value="views" {% if selected_sort == 'views' %}selected{% endif %}>조회순</option>
+      <option value="price_low" {% if selected_sort == 'price_low' %}selected{% endif %}>낮은 가격순</option>
+      <option value="price_high" {% if selected_sort == 'price_high' %}selected{% endif %}>높은 가격순</option>
+    </select>
+    <button type="submit">필터 적용</button>
+    <a href="{{ url_for('dashboard') }}" class="filter-reset">초기화</a>
+  </form>
+
+  {% if products %}
+  <div class="product-grid marketplace-feed">
+    {% for product in products %}
+    <a href="{{ url_for('view_product', product_id=product.id) }}" class="product-card">
+      <div class="product-thumb real-product-thumb">
+        {% set card_image = product_image_url(product.image_filename) %}
+        {% if card_image %}
+        <img src="{{ card_image }}" alt="{{ product.title }}">
+        {% else %}
+        <div class="product-placeholder-icon">H</div>
+        {% endif %}
+        {% if product.status != '판매중' %}<span class="product-status-overlay">{{ product.status }}</span>{% endif %}
+      </div>
+      <div class="product-body">
+        <p class="product-meta-line">{{ product.category }}{% if product.location %} · {{ product.location }}{% endif %}</p>
+        <h3 class="product-title">{{ product.title }}</h3>
+        <strong class="product-price">{{ "{:,}".format(product.price) }}원</strong>
+        <div class="product-card-bottom">
+          <span>{{ product.condition }}</span>
+          <span>♡ {{ product.favorite_count }} · 조회 {{ product.view_count }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="hatket-empty-state">
+    <div class="hatket-empty-icon">H</div>
+    <h2>조건에 맞는 상품이 없어요</h2>
+    <p>검색어나 필터를 바꾸거나 첫 상품을 등록해보세요.</p>
+    <a href="{{ url_for('new_product') }}" class="hatket-primary-button empty-action">상품 등록하기</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

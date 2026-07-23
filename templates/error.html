@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{ status_code }} | 햇켓{% endblock %}
+
+{% block content %}
+<section class="hatket-error-page">
+  <span class="hatket-error-code">{{ status_code }}</span>
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+  <div class="hatket-error-actions">
+    <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('index') }}" class="hatket-mint-button">
+      홈으로 돌아가기
+    </a>
+    <button type="button" class="hatket-outline-button" onclick="history.back()">
+      이전 페이지
+    </button>
+  </div>
+</section>
+{% endblock %}

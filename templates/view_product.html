@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{{ product.title }} | 햇켓{% endblock %}
+{% block content %}
+<section class="market-detail-page">
+  <nav class="detail-breadcrumb"><a href="{{ url_for('dashboard') }}">상품 목록</a><span>›</span><span>{{ product.category }}</span></nav>
+
+  <div class="market-detail-grid">
+    <section class="detail-gallery-card">
+      {% if images %}
+        <div class="detail-main-image"><img id="main-product-image" src="{{ url_for('static', filename='uploads/products/' + images[0].filename) }}" alt="{{ product.title }}"></div>
+        {% if images|length > 1 %}
+        <div class="detail-thumbnails">
+          {% for image in images %}
+          <button type="button" data-image="{{ url_for('static', filename='uploads/products/' + image.filename) }}" aria-label="상품 이미지 {{ loop.index }} 보기"><img src="{{ url_for('static', filename='uploads/products/' + image.filename) }}" alt=""></button>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="detail-main-image detail-image-empty"><span>H</span><small>등록된 이미지가 없습니다</small></div>
+      {% endif %}
+    </section>
+
+    <aside class="detail-purchase-card">
+      <div class="detail-label-row"><span class="detail-category">{{ product.category }}</span><span class="detail-status status-{{ product.status }}">{{ product.status }}</span></div>
+      <h1>{{ product.title }}</h1>
+      <div class="detail-price">{{ "{:,}".format(product.price) }}<small>원</small></div>
+      {% if product.negotiable %}<span class="detail-negotiable">가격 제안 가능</span>{% endif %}
+      <div class="detail-metrics"><span>조회 {{ product.view_count }}</span><span>관심 {{ favorite_count }}</span><span>{{ product.created_at[:10] if product.created_at else '' }}</span></div>
+
+      <dl class="detail-spec-list">
+        <div><dt>상품 상태</dt><dd>{{ product.condition }}</dd></div>
+        <div><dt>거래 방법</dt><dd>{{ product.trade_method }}</dd></div>
+        <div><dt>거래 장소</dt><dd>{{ product.location or '판매자와 협의' }}</dd></div>
+      </dl>
+
+      {% if session.get('user_id') == product.seller_id %}
+        <div class="detail-owner-actions">
+          <a href="{{ url_for('edit_product', product_id=product.id) }}" class="hatket-mint-button">상품 수정</a>
+          <form class="detail-inline-form" method="post" action="{{ url_for('change_product_status', product_id=product.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="status" aria-label="판매 상태">
+              {% for status in ['판매중', '예약중', '판매완료'] %}<option value="{{ status }}" {% if product.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}
+            </select>
+            <button type="submit" class="hatket-outline-button">상태 변경</button>
+          </form>
+        </div>
+      {% elif session.get('user_id') %}
+        <div class="detail-buyer-actions">
+          <form class="detail-inline-form" method="post" action="{{ url_for('toggle_favorite', product_id=product.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="detail-favorite-button {% if is_favorited %}active{% endif %}">
+              {% if is_favorited %}♥ 찜한 상품{% else %}♡ 관심 상품{% endif %}
+            </button>
+          </form>
+
+          {% if product.status != '판매완료' %}
+          <a
+            href="{{ url_for('transfer', product_id=product.id) }}"
+            class="detail-pay-button"
+          >
+            {{ "{:,}".format(product.price) }}원 송금
+          </a>
+
+          <form class="detail-inline-form" method="post" action="{{ url_for('start_private_chat', user_id=seller.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="product_id" value="{{ product.id }}">
+            <button type="submit" class="detail-chat-button">판매자와 채팅</button>
+          </form>
+          {% else %}
+          <button type="button" class="detail-chat-button disabled" disabled>거래 완료된 상품</button>
+          {% endif %}
+        </div>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="detail-chat-button">로그인하고 문의하기</a>
+      {% endif %}
+
+      <div class="detail-safe-notice"><strong>안전거래 안내</strong><p>외부 메신저나 선입금 유도에 주의하고, 거래 내용은 햇켓 채팅에 남겨주세요.</p></div>
+    </aside>
+  </div>
+
+  <div class="detail-lower-grid">
+    <section class="detail-description-card"><span class="hatket-section-label">PRODUCT INFO</span><h2>상품 설명</h2><p>{{ product.description }}</p></section>
+    <aside class="detail-seller-card">
+      <span class="hatket-section-label">SELLER</span>
+      <a href="{{ url_for('public_profile', user_id=seller.id) }}" class="detail-seller-profile"><span class="detail-seller-avatar">{{ (seller.nickname or seller.username)[:1] }}</span><div><strong>{{ seller.nickname or seller.username }}</strong><small>@{{ seller.username }}</small></div></a>
+      <p>{{ seller.bio or '아직 소개글이 없습니다.' }}</p>
+      {% if session.get('user_id') and session.get('user_id') != product.seller_id %}
+      <div class="detail-secondary-actions">
+        <form class="detail-inline-form" method="post" action="{{ url_for('hide_product_for_me', product_id=product.id) }}" onsubmit="return confirm('이 상품을 내 피드에서 숨길까요?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="hatket-outline-button" type="submit">관심 없음</button></form>
+        <a href="{{ url_for('report', target_id=product.id, target_type='product') }}" class="detail-report-link">상품 신고</a>
+      </div>
+      {% endif %}
+    </aside>
+  </div>
+
+  {% if session.get('user_id') == product.seller_id %}
+  <form class="detail-delete-form" method="post" action="{{ url_for('delete_product', product_id=product.id) }}" onsubmit="return confirm('상품을 삭제할까요? 삭제 후 복구할 수 없습니다.');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">상품 삭제</button></form>
+  {% endif %}
+</section>
+<script>document.querySelectorAll('[data-image]').forEach((button)=>button.addEventListener('click',()=>{const image=document.getElementById('main-product-image');if(image){image.src=button.dataset.image;}document.querySelectorAll('[data-image]').forEach((item)=>item.classList.remove('active'));button.classList.add('active');}));</script>
+{% endblock %}

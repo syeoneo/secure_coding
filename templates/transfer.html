@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}햇켓페이 송금 | 햇켓{% endblock %}
+{% block content %}
+<section class="pay-page">
+  <header class="pay-hero">
+    <div>
+      <span class="hatket-section-label">HATKET PAY</span>
+      <h1>햇켓페이 송금</h1>
+      <p>상품 금액을 그대로 보내거나 사용자명으로 간편 송금할 수 있어요.</p>
+    </div>
+
+    <div class="pay-balance">
+      <small>송금 가능 잔액</small>
+      <strong>{{ "{:,}".format(user.balance) }}<span>원</span></strong>
+    </div>
+  </header>
+
+  {% if not has_payment_password %}
+    <section class="pay-pin-setup-notice">
+      <div>
+        <span class="hatket-section-label">PAYMENT SECURITY</span>
+        <strong>송금 전 결제 비밀번호 설정이 필요합니다.</strong>
+        <p>숫자 6자리 결제 비밀번호는 암호화된 해시로 저장됩니다.</p>
+      </div>
+      <a href="{{ url_for('payment_password') }}" class="hatket-mint-button">
+        결제 비밀번호 설정
+      </a>
+    </section>
+  {% endif %}
+
+  <div class="pay-grid">
+    <section class="pay-send-card">
+      {% if selected_product %}
+        <div class="pay-card-heading">
+          <div>
+            <span class="hatket-section-label">PRODUCT PAYMENT</span>
+            <h2>상품 대금 송금</h2>
+          </div>
+          <a href="{{ url_for('transfer') }}" class="pay-mode-link">일반 송금</a>
+        </div>
+
+        <div class="pay-product-summary">
+          <div>
+            <small>결제 상품</small>
+            <a href="{{ url_for('view_product', product_id=selected_product.id) }}">
+              {{ selected_product.title }}
+            </a>
+          </div>
+
+          <div>
+            <small>받는 사람</small>
+            <strong>{{ selected_product.seller_name }}</strong>
+            <span>@{{ selected_product.seller_username }}</span>
+          </div>
+
+          <div class="pay-product-total">
+            <small>송금 금액</small>
+            <strong>{{ "{:,}".format(selected_product.price) }}원</strong>
+          </div>
+        </div>
+
+        <form
+          method="post"
+          action="{{ url_for('transfer') }}"
+          class="pay-form"
+          onsubmit="return confirm('{{ selected_product.seller_name }}님에게 {{ '{:,}'.format(selected_product.price) }}원을 송금할까요?');"
+        >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="product_id" value="{{ selected_product.id }}">
+
+          <label for="product-payment-pin">결제 비밀번호</label>
+          <div class="pay-pin-input">
+            <input
+              id="product-payment-pin"
+              name="payment_pin"
+              type="password"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              minlength="6"
+              maxlength="6"
+              placeholder="숫자 6자리"
+              autocomplete="off"
+              required
+              {% if not has_payment_password %}disabled{% endif %}
+            >
+            <span>●●●●●●</span>
+          </div>
+
+          <div class="pay-warning">
+            송금이 완료되면 상품은 자동으로 판매완료 처리됩니다.
+            상품과 판매자를 다시 확인해주세요.
+          </div>
+
+          <button
+            type="submit"
+            class="pay-submit-button"
+            {% if not has_payment_password %}disabled{% endif %}
+          >
+            {{ "{:,}".format(selected_product.price) }}원 송금하기
+          </button>
+        </form>
+      {% else %}
+        <span class="hatket-section-label">SIMPLE TRANSFER</span>
+        <h2>일반 송금</h2>
+
+        <form
+          method="post"
+          action="{{ url_for('transfer') }}"
+          class="pay-form"
+          onsubmit="return confirm('입력한 사용자에게 송금할까요?');"
+        >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label for="receiver_username">받는 사람 사용자명</label>
+          <div class="pay-input-prefix">
+            <span>@</span>
+            <input
+              id="receiver_username"
+              name="receiver_username"
+              type="text"
+              minlength="3"
+              maxlength="30"
+              placeholder="username"
+              autocomplete="off"
+              required
+            >
+          </div>
+
+          <label for="amount">보낼 금액</label>
+          <div class="pay-amount-input">
+            <input
+              id="amount"
+              name="amount"
+              type="number"
+              min="1"
+              max="100000000"
+              step="1"
+              placeholder="0"
+              required
+            >
+            <span>원</span>
+          </div>
+
+          <div class="pay-quick-buttons">
+            <button type="button" data-add-amount="1000">+1천</button>
+            <button type="button" data-add-amount="5000">+5천</button>
+            <button type="button" data-add-amount="10000">+1만</button>
+            <button type="button" data-add-amount="50000">+5만</button>
+          </div>
+
+          <label for="payment-pin">결제 비밀번호</label>
+          <div class="pay-pin-input">
+            <input
+              id="payment-pin"
+              name="payment_pin"
+              type="password"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              minlength="6"
+              maxlength="6"
+              placeholder="숫자 6자리"
+              autocomplete="off"
+              required
+              {% if not has_payment_password %}disabled{% endif %}
+            >
+            <span>●●●●●●</span>
+          </div>
+
+          <div class="pay-warning">
+            받는 사람의 사용자명을 다시 확인해주세요.
+            송금은 잔액에서 즉시 차감됩니다.
+          </div>
+
+          <button
+            type="submit"
+            class="pay-submit-button"
+            {% if not has_payment_password %}disabled{% endif %}
+          >
+            송금하기
+          </button>
+        </form>
+      {% endif %}
+    </section>
+
+    <section class="pay-history-card">
+      <div class="pay-history-head">
+        <div>
+          <span class="hatket-section-label">HISTORY</span>
+          <h2>최근 송금 내역</h2>
+        </div>
+        <span>{{ transfers|length }}건</span>
+      </div>
+
+      {% if transfers %}
+        <div class="pay-history-list">
+          {% for transfer in transfers %}
+            {% set is_sent = transfer.sender_id == session.get('user_id') %}
+            <article class="pay-history-item {% if is_sent %}sent{% else %}received{% endif %}">
+              <span class="pay-history-icon">{% if is_sent %}↑{% else %}↓{% endif %}</span>
+              <div>
+                <strong>
+                  {% if is_sent %}
+                    {{ transfer.receiver_name }}님에게 송금
+                  {% else %}
+                    {{ transfer.sender_name }}님에게 받음
+                  {% endif %}
+                </strong>
+                <small>
+                  {{ transfer.product_title or '일반 송금' }} · {{ transfer.created_at }}
+                </small>
+              </div>
+              <b>
+                {% if is_sent %}-{% else %}+{% endif %}{{ "{:,}".format(transfer.amount) }}원
+              </b>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="pay-empty">아직 송금 내역이 없습니다.</div>
+      {% endif %}
+    </section>
+  </div>
+</section>
+
+<script>
+document.querySelectorAll('[data-add-amount]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const input = document.getElementById('amount');
+    if (!input) return;
+    input.value = Math.min(
+      100000000,
+      (Number(input.value) || 0) + Number(button.dataset.addAmount)
+    );
+    input.focus();
+  });
+});
+</script>
+{% endblock %}

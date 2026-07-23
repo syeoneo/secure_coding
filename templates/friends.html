@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}친구 | 햇켓{% endblock %}
+
+{% block content %}
+<section class="hatket-friends-page">
+
+  <header class="hatket-friends-header">
+    <div>
+      <span class="hatket-section-label">FRIENDS</span>
+      <h1>친구</h1>
+      <p>
+        사용자를 찾아 친구를 맺고,
+        프로필을 확인하거나 1:1 채팅을 시작해보세요.
+      </p>
+    </div>
+
+    <div class="hatket-friends-count">
+      <strong>{{ friends|length }}</strong>
+      <span>명의 친구</span>
+    </div>
+  </header>
+
+
+  <!-- 사용자 검색 -->
+  <section class="hatket-friend-search-card">
+    <div class="hatket-friend-section-title">
+      <div>
+        <span>FIND PEOPLE</span>
+        <h2>친구 찾기</h2>
+      </div>
+    </div>
+
+    <form
+      method="get"
+      action="{{ url_for('friends') }}"
+      class="hatket-friend-search-form"
+    >
+      <label
+        for="friend-search"
+        class="hatket-sr-only"
+      >
+        사용자 검색
+      </label>
+
+      <input
+        id="friend-search"
+        type="search"
+        name="q"
+        value="{{ query or '' }}"
+        maxlength="50"
+        placeholder="아이디 또는 닉네임을 입력해주세요"
+      >
+
+      <button type="submit">
+        검색
+      </button>
+    </form>
+
+    {% if query %}
+      <div class="hatket-friend-search-results">
+        <div class="hatket-friend-result-header">
+          <div>
+            <h3>검색 결과</h3>
+            <p>
+              “{{ query }}” 검색 결과입니다.
+            </p>
+          </div>
+
+          <a href="{{ url_for('friends') }}">
+            검색 초기화
+          </a>
+        </div>
+
+        {% if search_results %}
+          <div class="hatket-people-list">
+            {% for person in search_results %}
+              <article class="hatket-person-card">
+                <a
+                  href="{{ url_for('public_profile', user_id=person.id) }}"
+                  class="hatket-person-info"
+                >
+                  <span class="hatket-person-avatar">
+                    {{ (person.nickname or person.username)[:1] }}
+                  </span>
+
+                  <div class="hatket-person-text">
+                    <strong>
+                      {{ person.nickname or person.username }}
+                    </strong>
+
+                    <small>
+                      @{{ person.username }}
+                    </small>
+
+                    <p>
+                      {{ person.bio or '아직 소개글이 없습니다.' }}
+                    </p>
+                  </div>
+                </a>
+
+                <div class="hatket-friend-actions">
+                  <a
+                    href="{{ url_for('public_profile', user_id=person.id) }}"
+                    class="hatket-outline-button"
+                  >
+                    프로필
+                  </a>
+
+                  <form
+                    method="post"
+                    action="{{ url_for('send_friend_request', user_id=person.id) }}"
+                  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button
+                      type="submit"
+                      class="hatket-mint-button"
+                    >
+                      친구 신청
+                    </button>
+                  </form>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="hatket-friend-empty-small">
+            검색된 사용자가 없습니다.
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+
+
+  <!-- 받은 친구 신청 -->
+  {% if incoming_requests %}
+    <section class="hatket-friend-section-card">
+      <div class="hatket-friend-section-title">
+        <div>
+          <span>REQUESTS</span>
+          <h2>받은 친구 신청</h2>
+        </div>
+
+        <strong class="hatket-request-count">
+          {{ incoming_requests|length }}
+        </strong>
+      </div>
+
+      <div class="hatket-people-list">
+        {% for friend_request in incoming_requests %}
+          <article class="hatket-person-card">
+            <a
+              href="{{ url_for('public_profile', user_id=friend_request.sender_id) }}"
+              class="hatket-person-info"
+            >
+              <span class="hatket-person-avatar">
+                {{ friend_request.sender_name[:1] }}
+              </span>
+
+              <div class="hatket-person-text">
+                <strong>
+                  {{ friend_request.sender_name }}
+                </strong>
+
+                <small>
+                  @{{ friend_request.username }}
+                </small>
+
+                <p>
+                  {{ friend_request.bio or '아직 소개글이 없습니다.' }}
+                </p>
+              </div>
+            </a>
+
+            <div class="hatket-request-actions">
+              <form
+                method="post"
+                action="{{ url_for('accept_friend_request', request_id=friend_request.id) }}"
+              >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button
+                  type="submit"
+                  class="hatket-mint-button"
+                >
+                  수락
+                </button>
+              </form>
+
+              <form
+                method="post"
+                action="{{ url_for('reject_friend_request', request_id=friend_request.id) }}"
+              >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button
+                  type="submit"
+                  class="hatket-outline-button"
+                >
+                  거절
+                </button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+
+  <!-- 보낸 친구 신청 -->
+  {% if outgoing_requests %}
+    <section class="hatket-friend-section-card">
+      <div class="hatket-friend-section-title">
+        <div>
+          <span>PENDING</span>
+          <h2>보낸 친구 신청</h2>
+        </div>
+      </div>
+
+      <div class="hatket-pending-list">
+        {% for friend_request in outgoing_requests %}
+          <a
+            href="{{ url_for('public_profile', user_id=friend_request.receiver_id) }}"
+            class="hatket-pending-item"
+          >
+            <span class="hatket-person-avatar small">
+              {{ friend_request.receiver_name[:1] }}
+            </span>
+
+            <div>
+              <strong>
+                {{ friend_request.receiver_name }}
+              </strong>
+
+              <small>
+                @{{ friend_request.username }}
+              </small>
+            </div>
+
+            <span class="hatket-waiting-badge">
+              수락 대기 중
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+
+  <!-- 내 친구 -->
+  <section class="hatket-friend-section-card">
+    <div class="hatket-friend-section-title">
+      <div>
+        <span>MY FRIENDS</span>
+        <h2>내 친구</h2>
+        <p>
+          친구 프로필을 확인하거나 바로 대화를 시작할 수 있어요.
+        </p>
+      </div>
+
+      <strong class="hatket-request-count">
+        {{ friends|length }}
+      </strong>
+    </div>
+
+    {% if friends %}
+      <div class="hatket-people-list">
+        {% for friend in friends %}
+          <article class="hatket-person-card">
+            <a
+              href="{{ url_for('public_profile', user_id=friend.friend_id) }}"
+              class="hatket-person-info"
+            >
+              <span class="hatket-person-avatar">
+                {{ (friend.friend_name or friend.friend_username)[:1] }}
+              </span>
+
+              <div class="hatket-person-text">
+                <strong>
+                  {{ friend.friend_name }}
+                </strong>
+
+                <small>
+                  @{{ friend.friend_username }}
+                </small>
+
+                <p>
+                  {{ friend.friend_bio or '아직 소개글이 없습니다.' }}
+                </p>
+              </div>
+            </a>
+
+            <div class="hatket-friend-actions">
+              <a
+                href="{{ url_for('public_profile', user_id=friend.friend_id) }}"
+                class="hatket-outline-button"
+              >
+                프로필
+              </a>
+
+              <form
+                method="post"
+                action="{{ url_for('start_private_chat', user_id=friend.friend_id) }}"
+              >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button
+                  type="submit"
+                  class="hatket-mint-button"
+                >
+                  1:1 채팅
+                </button>
+              </form>
+
+              <form
+                method="post"
+                action="{{ url_for('remove_friend', user_id=friend.friend_id) }}"
+                onsubmit="return confirm('이 친구를 삭제할까요?');"
+              >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button
+                  type="submit"
+                  class="hatket-delete-button"
+                >
+                  친구 삭제
+                </button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="hatket-empty-state">
+        <div class="hatket-empty-icon">H</div>
+
+        <h2>아직 친구가 없어요</h2>
+
+        <p>
+          위 검색창에서 사용자를 찾아 친구 신청을 보내보세요.
+        </p>
+      </div>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {{ other_user.nickname or other_user.username }}님과 채팅 | 햇켓
+{% endblock %}
+
+{% block content %}
+<section
+  class="private-chat-page"
+  data-private-chat-page
+  data-room-id="{{ room.id }}"
+  data-current-user-id="{{ current_user_id }}"
+  data-profile-url-template="{{ url_for('public_profile', user_id='__USER_ID__') }}"
+>
+  <div class="private-chat-shell">
+
+    <header class="private-chat-topbar">
+      <a
+        href="{{ url_for('chat') }}"
+        class="private-chat-back-link"
+      >
+        ← 채팅 목록
+      </a>
+
+      <span class="private-chat-badge">
+        PRIVATE CHAT
+      </span>
+    </header>
+
+    <section class="private-chat-hero-card">
+      <div class="private-chat-user-card">
+        <a
+          href="{{ url_for('public_profile', user_id=other_user.id) }}"
+          class="private-chat-user"
+        >
+          <span class="private-chat-avatar">
+            {{ (other_user.nickname or other_user.username)[:1] }}
+          </span>
+
+          <div class="private-chat-user-text">
+            <strong>
+              {{ other_user.nickname or other_user.username }}
+            </strong>
+
+            <small>
+              @{{ other_user.username }}
+            </small>
+
+            <span>
+              프로필 보기
+            </span>
+          </div>
+        </a>
+
+        {% if product %}
+          <a
+            href="{{ url_for('view_product', product_id=product.id) }}"
+            class="private-chat-product-card"
+          >
+            <small>문의 상품</small>
+            <strong>{{ product.title }}</strong>
+            <span>
+              {{ "{:,}".format(product.price) }}원
+              ·
+              {{ product.status }}
+            </span>
+          </a>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="private-chat-room-card">
+      <div class="private-chat-room-header">
+        <div>
+          <span>MESSAGE ROOM</span>
+          <h1>
+            {{ other_user.nickname or other_user.username }}님과의 대화
+          </h1>
+          <p>
+            안전한 거래를 위해 햇켓 채팅에서 대화를 이어가세요.
+          </p>
+        </div>
+      </div>
+
+      <div
+        id="private-chat-messages"
+        class="private-chat-messages"
+        aria-live="polite"
+      >
+        {% if messages %}
+          {% for message in messages %}
+            <div
+              class="private-message-row {% if message.sender_id == current_user_id %}own{% else %}other{% endif %}"
+              data-message-id="{{ message.id }}"
+            >
+              <div class="private-message-content">
+                {% if message.sender_id != current_user_id %}
+                  <a
+                    href="{{ url_for('public_profile', user_id=message.sender_id) }}"
+                    class="private-message-sender"
+                  >
+                    {{ message.sender_name }}
+                  </a>
+                {% endif %}
+
+                <div class="private-message-bubble">
+                  {{ message.message }}
+                </div>
+
+                <div class="private-message-meta">
+                  {% if message.sender_id == current_user_id %}
+                    <span class="private-read-state">
+                      {% if message.read_at %}
+                        읽음
+                      {% else %}
+                        안읽음
+                      {% endif %}
+                    </span>
+                    ·
+                  {% endif %}
+
+                  {% if message.created_at and message.created_at|length >= 16 %}
+                    {{ message.created_at[11:16] }}
+                  {% else %}
+                    {{ message.created_at }}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="private-chat-notice">
+            첫 메시지를 보내 대화를 시작해보세요.
+          </div>
+        {% endif %}
+      </div>
+
+      <form
+        id="private-chat-form"
+        class="private-chat-composer"
+        novalidate
+      >
+        <label
+          for="private-chat-input"
+          class="hatket-sr-only"
+        >
+          메시지 입력
+        </label>
+
+        <textarea
+          id="private-chat-input"
+          class="private-chat-input"
+          rows="4"
+          placeholder="메시지를 입력해주세요. Shift + Enter로 줄바꿈할 수 있습니다."
+          autocomplete="off"
+        ></textarea>
+
+        <div class="private-chat-composer-footer">
+          <div class="private-chat-composer-info">
+            <span
+              id="private-chat-error"
+              class="private-chat-error"
+              role="alert"
+            ></span>
+
+            <span
+              id="private-chat-length"
+              class="private-chat-length"
+            >
+              0 / 500
+            </span>
+          </div>
+
+          <button
+            id="private-chat-send"
+            class="private-chat-send-button"
+            type="submit"
+            disabled
+          >
+            전송
+          </button>
+        </div>
+      </form>
+    </section>
+
+  </div>
+</section>
+
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+  integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+  crossorigin="anonymous"
+></script>
+
+<script
+  src="{{ url_for('static', filename='private_chat.js') }}?v=4"
+></script>
+{% endblock %}

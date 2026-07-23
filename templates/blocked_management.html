@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}
+  차단 및 숨김 관리 | 햇켓
+{% endblock %}
+
+{% block content %}
+<section class="blocked-management-page">
+  <header class="blocked-management-header">
+    <div>
+      <span class="hatket-section-label">
+        PRIVACY & SAFETY
+      </span>
+
+      <h1>차단 및 숨김 관리</h1>
+
+      <p>
+        차단한 사용자와 관심 없음 처리한 상품을
+        확인하고 다시 해제할 수 있어요.
+      </p>
+    </div>
+
+    <a
+      href="{{ url_for('profile') }}"
+      class="hatket-outline-button"
+    >
+      마이페이지로
+    </a>
+  </header>
+
+  <section class="blocked-management-section">
+    <div class="blocked-management-section-header">
+      <div>
+        <span class="hatket-section-label">
+          BLOCKED USERS
+        </span>
+
+        <h2>차단한 사용자</h2>
+      </div>
+
+      <span class="blocked-management-count">
+        {{ blocked_users|length }}
+      </span>
+    </div>
+
+    {% if blocked_users %}
+      <div class="blocked-management-list">
+        {% for blocked_user in blocked_users %}
+          <article class="blocked-user-card">
+            <div class="blocked-user-main">
+              <span class="blocked-user-avatar">
+                {{
+                  (
+                    blocked_user.nickname
+                    or blocked_user.username
+                  )[:1]
+                }}
+              </span>
+
+              <div class="blocked-user-text">
+                <strong>
+                  {{
+                    blocked_user.nickname
+                    or blocked_user.username
+                  }}
+                </strong>
+
+                <span>
+                  @{{ blocked_user.username }}
+                </span>
+
+                <p>
+                  {{
+                    blocked_user.bio
+                    or '아직 소개글이 없습니다.'
+                  }}
+                </p>
+              </div>
+            </div>
+
+            <form
+              method="post"
+              action="{{ url_for(
+                'unblock_user',
+                user_id=blocked_user.id
+              ) }}"
+              class="blocked-action-form"
+              onsubmit="return confirm('이 사용자의 차단을 해제할까요?');"
+            >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input
+                type="hidden"
+                name="return_to"
+                value="blocked_management"
+              >
+
+              <button
+                type="submit"
+                class="hatket-outline-button"
+              >
+                차단 해제
+              </button>
+            </form>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="blocked-management-empty">
+        <strong>차단한 사용자가 없습니다.</strong>
+
+        <p>
+          사용자를 차단하면 이곳에서 확인할 수 있어요.
+        </p>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="blocked-management-section">
+    <div class="blocked-management-section-header">
+      <div>
+        <span class="hatket-section-label">
+          HIDDEN PRODUCTS
+        </span>
+
+        <h2>숨긴 상품</h2>
+      </div>
+
+      <span class="blocked-management-count">
+        {{ hidden_products|length }}
+      </span>
+    </div>
+
+    {% if hidden_products %}
+      <div class="blocked-management-list">
+        {% for product in hidden_products %}
+          <article class="hidden-product-card">
+            <div class="hidden-product-main">
+              <div class="hidden-product-icon">
+                H
+              </div>
+
+              <div class="hidden-product-text">
+                <span class="hidden-product-status">
+                  {{ product.status }}
+                </span>
+
+                <a
+                  href="{{ url_for(
+                    'view_product',
+                    product_id=product.id
+                  ) }}"
+                >
+                  {{ product.title }}
+                </a>
+
+                <strong>
+                  {{ "{:,}".format(product.price) }}원
+                </strong>
+
+                <small>
+                  판매자 {{ product.seller_name }}
+                </small>
+              </div>
+            </div>
+
+            <form
+              method="post"
+              action="{{ url_for(
+                'unhide_product_for_me',
+                product_id=product.id
+              ) }}"
+              class="blocked-action-form"
+              onsubmit="return confirm('이 상품을 다시 피드에 표시할까요?');"
+            >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input
+                type="hidden"
+                name="return_to"
+                value="blocked_management"
+              >
+
+              <button
+                type="submit"
+                class="hatket-mint-button"
+              >
+                다시 표시
+              </button>
+            </form>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="blocked-management-empty">
+        <strong>숨긴 상품이 없습니다.</strong>
+
+        <p>
+          상품을 관심 없음 처리하면 이곳에서 확인할 수 있어요.
+        </p>
+      </div>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}상품 수정 | 햇켓{% endblock %}
+{% block content %}
+<section class="product-form-page">
+  <div class="product-form-heading"><span class="hatket-section-label">EDIT ITEM</span><h1>상품 수정</h1><p>기존 사진을 관리하고 상품 정보를 최신 상태로 바꿔주세요.</p></div>
+  <div class="existing-image-section">
+    <h2>현재 사진 <span>{{ images|length }} / 5</span></h2>
+    <div class="existing-image-grid">
+      {% for image in images %}
+      <div class="existing-image-card">
+        <img src="{{ url_for('static', filename='uploads/products/' + image.filename) }}" alt="상품 사진">
+        {% if loop.first %}<span class="representative-badge">대표</span>{% endif %}
+        <form method="post" action="{{ url_for('delete_product_image', product_id=product.id, image_id=image.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="image-delete-button">삭제</button></form>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <form method="post" enctype="multipart/form-data" class="product-editor-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid two-columns">
+      <div class="form-field full-width"><label for="images">새 사진 추가</label><input id="images" name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple><small>현재 사진을 포함해 최대 5장까지 저장됩니다.</small><div id="image-preview" class="image-preview-grid"></div></div>
+      <div class="form-field full-width"><label for="title">상품명</label><input id="title" name="title" type="text" maxlength="100" value="{{ product.title }}" required></div>
+      <div class="form-field"><label for="category">카테고리</label><select id="category" name="category">{% for item in categories %}<option value="{{ item }}" {% if product.category == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+      <div class="form-field"><label for="condition">상품 상태</label><select id="condition" name="condition">{% for item in conditions %}<option value="{{ item }}" {% if product.condition == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+      <div class="form-field"><label for="price">가격</label><input id="price" name="price" type="number" min="1" max="100000000" value="{{ product.price }}" required></div>
+      <div class="form-field"><label for="trade_method">거래 방법</label><select id="trade_method" name="trade_method">{% for item in trade_methods %}<option value="{{ item }}" {% if product.trade_method == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+      <div class="form-field full-width"><label for="location">거래 희망 장소</label><input id="location" name="location" type="text" maxlength="100" value="{{ product.location or '' }}"></div>
+      <div class="form-field"><label for="status">판매 상태</label><select id="status" name="status">{% for item in statuses %}<option value="{{ item }}" {% if product.status == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+      <div class="form-field checkbox-field"><label><input type="checkbox" name="negotiable" value="1" {% if product.negotiable %}checked{% endif %}> 가격 제안 받기</label></div>
+      <div class="form-field full-width"><label for="description">상품 설명</label><textarea id="description" name="description" maxlength="2000" required>{{ product.description }}</textarea></div>
+    </div>
+    <div class="form-actions"><a href="{{ url_for('view_product', product_id=product.id) }}" class="hatket-secondary-button">취소</a><button type="submit">수정 완료</button></div>
+  </form>
+</section>
+<script>
+const imageInput = document.getElementById('images'); const preview = document.getElementById('image-preview');
+imageInput.addEventListener('change', () => { preview.replaceChildren(); Array.from(imageInput.files).forEach((file, index) => { const box = document.createElement('div'); box.className='image-preview-item'; const img=document.createElement('img'); img.src=URL.createObjectURL(file); img.alt=`추가할 상품 사진 ${index+1}`; box.append(img); preview.append(box); }); });
+</script>
+{% endblock %}

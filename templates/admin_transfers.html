@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}전체 송금 거래 내역 | 햇켓{% endblock %}
+
+{% block content %}
+<section class="admin-page admin-ledger-page">
+  <header class="admin-hero admin-transfer-hero">
+    <div>
+      <span class="hatket-section-label">TRANSFER LEDGER</span>
+      <h1>전체 송금 거래 내역</h1>
+      <p>햇켓 내부에서 발생한 사용자 간 송금을 운영·감사 목적으로 조회합니다.</p>
+    </div>
+    <div class="admin-hero-actions">
+      <a href="{{ url_for('admin_logs') }}" class="hatket-outline-button">관리자 작업 로그</a>
+      <a href="{{ url_for('admin') }}" class="hatket-mint-button">관리자 홈</a>
+    </div>
+  </header>
+
+  <div class="admin-ledger-stats admin-transfer-stats">
+    <article>
+      <small>누적 거래 건수</small>
+      <strong>{{ total_count }}</strong>
+      <span>성공 처리된 송금</span>
+    </article>
+    <article>
+      <small>누적 거래액</small>
+      <strong>{{ "{:,}".format(total_amount) }}원</strong>
+      <span>전체 송금 합계</span>
+    </article>
+    <article>
+      <small>오늘 거래액</small>
+      <strong>{{ "{:,}".format(today_amount) }}원</strong>
+      <span>오늘 발생한 송금</span>
+    </article>
+    <article>
+      <small>최고 단일 거래</small>
+      <strong>{{ "{:,}".format(max_amount) }}원</strong>
+      <span>1회 송금 최대값</span>
+    </article>
+  </div>
+
+  <section class="admin-panel">
+    <div class="admin-panel-head admin-panel-head-split">
+      <div>
+        <span class="hatket-section-label">LATEST 200</span>
+        <h2>송금 원장</h2>
+      </div>
+      <span class="admin-ledger-caption">관리자는 조회만 가능</span>
+    </div>
+
+    {% if transfers %}
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-transfer-table">
+          <thead>
+            <tr>
+              <th>거래 시각</th>
+              <th>보낸 사람</th>
+              <th></th>
+              <th>받은 사람</th>
+              <th>송금액</th>
+              <th>거래 번호</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for transfer in transfers %}
+              <tr>
+                <td><time>{{ transfer.created_at }}</time></td>
+                <td>
+                  <strong>{{ transfer.sender_nickname or transfer.sender_username }}</strong>
+                  <small>@{{ transfer.sender_username }}</small>
+                </td>
+                <td><span class="admin-transfer-arrow">→</span></td>
+                <td>
+                  <strong>{{ transfer.receiver_nickname or transfer.receiver_username }}</strong>
+                  <small>@{{ transfer.receiver_username }}</small>
+                </td>
+                <td><strong class="admin-transfer-amount">{{ "{:,}".format(transfer.amount) }}원</strong></td>
+                <td><code>{{ transfer.id[:8] }}</code></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="admin-empty-state admin-empty-large">
+        <strong>아직 송금 거래가 없습니다.</strong>
+        <p>사용자 간 송금이 완료되면 이 원장에 자동으로 기록됩니다.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <aside class="admin-integrity-notice transfer">
+    <strong>거래 원장 보호</strong>
+    <p>관리자 화면에서는 거래 내역을 조회할 수 있지만 금액·발신자·수신자를 수정하거나 삭제할 수 없습니다.</p>
+  </aside>
+</section>
+{% endblock %}

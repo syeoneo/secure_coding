@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}운영 관리 | 햇켓{% endblock %}
+
+{% block content %}
+<section class="admin-page">
+  <header class="admin-hero">
+    <div>
+      <span class="hatket-section-label">ADMIN CONSOLE</span>
+      <h1>햇켓 운영 관리</h1>
+      <p>사용자 제재, 상품 노출, 송금 거래와 관리자 조치를 한곳에서 확인합니다.</p>
+    </div>
+
+    <div class="admin-hero-actions">
+      <a href="{{ url_for('admin_reports') }}" class="hatket-primary-button">신고 검토{% if pending_report_total %} ({{ pending_report_total }}){% endif %}</a>
+      <a href="{{ url_for('admin_transfers') }}" class="hatket-outline-button">송금 거래 내역</a>
+      <a href="{{ url_for('admin_logs') }}" class="hatket-mint-button">관리자 작업 로그</a>
+      <a href="{{ url_for('dashboard') }}" class="hatket-outline-button">서비스로 돌아가기</a>
+    </div>
+  </header>
+
+  <div class="admin-stat-grid admin-stat-grid-wide">
+    <article>
+      <small>전체 사용자</small>
+      <strong>{{ users|length }}</strong>
+      <span>가입 계정</span>
+    </article>
+    <article>
+      <small>등록 상품</small>
+      <strong>{{ products|length }}</strong>
+      <span>누적 등록</span>
+    </article>
+    <article>
+      <small>검토 대기 신고</small>
+      <strong>{{ pending_report_total }}</strong>
+      <span>전체 {{ report_total }}건</span>
+    </article>
+    <article>
+      <small>정지 계정</small>
+      <strong>{{ users|selectattr('is_suspended', 'equalto', 1)|list|length }}</strong>
+      <span>현재 이용 제한</span>
+    </article>
+    <article>
+      <small>송금 건수</small>
+      <strong>{{ transfer_count }}</strong>
+      <span>누적 {{ "{:,}".format(transfer_total) }}원</span>
+    </article>
+    <article>
+      <small>관리자 조치</small>
+      <strong>{{ admin_log_total }}</strong>
+      <span>감사 로그 누적</span>
+    </article>
+  </div>
+
+  <section class="admin-panel admin-audit-preview">
+    <div class="admin-panel-head admin-panel-head-split">
+      <div>
+        <span class="hatket-section-label">RECENT ACTIONS</span>
+        <h2>최근 관리자 작업</h2>
+      </div>
+      <a href="{{ url_for('admin_logs') }}" class="admin-text-link">전체 로그 보기 →</a>
+    </div>
+
+    {% if recent_admin_logs %}
+      <div class="admin-recent-log-list">
+        {% for log in recent_admin_logs %}
+          <article>
+            <span class="admin-action-dot"></span>
+            <div>
+              <strong>
+                {% if log.action_type == 'USER_SUSPEND' %}사용자 정지
+                {% elif log.action_type == 'USER_RESTORE' %}사용자 정지 해제
+                {% elif log.action_type == 'PRODUCT_HIDE' %}상품 숨김
+                {% elif log.action_type == 'PRODUCT_RESTORE' %}상품 복구
+                {% elif log.action_type == 'REPORT_APPROVE_USER' %}사용자 신고 승인
+                {% elif log.action_type == 'REPORT_APPROVE_PRODUCT' %}상품 신고 승인
+                {% elif log.action_type == 'REPORT_REJECT' %}신고 기각
+                {% else %}관리자 조치{% endif %}
+              </strong>
+              <small>{{ log.target_label }} · @{{ log.admin_username }}</small>
+            </div>
+            <time>{{ log.created_at }}</time>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="admin-empty-state">아직 기록된 관리자 작업이 없습니다.</div>
+    {% endif %}
+  </section>
+
+  <section class="admin-panel">
+    <div class="admin-panel-head">
+      <div>
+        <span class="hatket-section-label">USERS</span>
+        <h2>사용자 관리</h2>
+      </div>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>사용자</th>
+            <th>신고</th>
+            <th>상태</th>
+            <th>권한</th>
+            <th>조치</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+            <tr>
+              <td>
+                <strong>{{ user.nickname or user.username }}</strong>
+                <small>@{{ user.username }}</small>
+              </td>
+              <td>{{ user.report_count }}</td>
+              <td>
+                <span class="admin-state {% if user.is_suspended %}danger{% else %}normal{% endif %}">
+                  {% if user.is_suspended %}정지{% else %}정상{% endif %}
+                </span>
+              </td>
+              <td>{% if user.is_admin %}관리자{% else %}일반{% endif %}</td>
+              <td>
+                {% if user.is_admin %}
+                  <span class="admin-disabled">변경 불가</span>
+                {% else %}
+                  <form
+                    class="admin-inline-form"
+                    method="post"
+                    action="{{ url_for('admin_toggle_user_suspension', user_id=user.id) }}"
+                    onsubmit="return confirm('{% if user.is_suspended %}이 사용자의 정지를 해제할까요?{% else %}이 사용자의 계정을 정지할까요?{% endif %}');"
+                  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button
+                      class="{% if user.is_suspended %}admin-restore-button{% else %}admin-danger-button{% endif %}"
+                      type="submit"
+                    >
+                      {% if user.is_suspended %}정지 해제{% else %}계정 정지{% endif %}
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="admin-panel">
+    <div class="admin-panel-head">
+      <div>
+        <span class="hatket-section-label">PRODUCTS</span>
+        <h2>상품 관리</h2>
+      </div>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>상품</th>
+            <th>판매자</th>
+            <th>가격</th>
+            <th>신고</th>
+            <th>노출</th>
+            <th>조치</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+            <tr>
+              <td>
+                <a href="{{ url_for('view_product', product_id=product.id) }}">
+                  <strong>{{ product.title }}</strong>
+                </a>
+              </td>
+              <td>@{{ product.seller_username or '알 수 없음' }}</td>
+              <td>{{ "{:,}".format(product.price) }}원</td>
+              <td>{{ product.report_count }}</td>
+              <td>
+                <span class="admin-state {% if product.is_hidden %}danger{% else %}normal{% endif %}">
+                  {% if product.is_hidden %}숨김{% else %}공개{% endif %}
+                </span>
+              </td>
+              <td>
+                <form
+                  class="admin-inline-form"
+                  method="post"
+                  action="{{ url_for('admin_toggle_product_hidden', product_id=product.id) }}"
+                  onsubmit="return confirm('{% if product.is_hidden %}이 상품을 다시 공개할까요?{% else %}이 상품을 운영 정책상 숨길까요?{% endif %}');"
+                >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button
+                    class="{% if product.is_hidden %}admin-restore-button{% else %}admin-danger-button{% endif %}"
+                    type="submit"
+                  >
+                    {% if product.is_hidden %}상품 복구{% else %}상품 숨김{% endif %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}

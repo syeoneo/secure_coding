@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}
+  프로필 관리 | 햇켓
+{% endblock %}
+
+{% block content %}
+<section class="profile-page">
+  <header class="profile-page-header">
+    <div>
+      <span class="hatket-section-label">
+        MY PROFILE
+      </span>
+
+      <h1>프로필 관리</h1>
+
+      <p>
+        다른 사용자에게 표시되는 닉네임과
+        소개글을 관리할 수 있어요.
+      </p>
+    </div>
+
+    <div class="profile-header-actions">
+      <a
+        href="{{ url_for('blocked_management') }}"
+        class="hatket-outline-button"
+      >
+        차단·숨김 관리
+      </a>
+
+      <a
+        href="{{ url_for('payment_password') }}"
+        class="hatket-outline-button"
+      >
+        {% if has_payment_password %}
+          결제 비밀번호 변경
+        {% else %}
+          결제 비밀번호 설정
+        {% endif %}
+      </a>
+
+      <a
+        href="{{ url_for('change_password') }}"
+        class="hatket-mint-button"
+      >
+        로그인 비밀번호 변경
+      </a>
+    </div>
+  </header>
+
+  <section class="profile-edit-card">
+    <div class="profile-user-info">
+      <span class="profile-user-label">
+        로그인 아이디
+      </span>
+
+      <strong>
+        @{{ user.username }}
+      </strong>
+    </div>
+
+    <form
+      method="post"
+      action="{{ url_for('profile') }}"
+      class="profile-edit-form"
+    >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="hatket-form-group">
+        <label for="nickname">
+          닉네임
+        </label>
+
+        <input
+          id="nickname"
+          name="nickname"
+          type="text"
+          minlength="2"
+          maxlength="20"
+          value="{{ user.nickname or user.username }}"
+          placeholder="사용할 닉네임을 입력해주세요."
+          autocomplete="nickname"
+          required
+        >
+
+        <small>
+          2~20자의 한글, 영문, 숫자, 밑줄만 사용할 수 있습니다.
+        </small>
+      </div>
+
+      <div class="hatket-form-group">
+        <label for="bio">
+          소개글
+        </label>
+
+        <textarea
+          id="bio"
+          name="bio"
+          rows="5"
+          maxlength="500"
+          placeholder="나를 소개하는 글을 작성해주세요."
+        >{{ user.bio or '' }}</textarea>
+
+        <small>
+          최대 500자까지 입력할 수 있습니다.
+        </small>
+      </div>
+
+      <button
+        type="submit"
+        class="hatket-mint-button"
+      >
+        프로필 저장
+      </button>
+    </form>
+  </section>
+</section>
+{% endblock %}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}햇켓{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20260724-report-review">
+</head>
+<body>
+  <header class="hatket-header">
+    <div class="hatket-header-inner">
+      <a href="{{ url_for('dashboard') }}" class="hatket-brand" aria-label="햇켓 홈">
+        <span class="hatket-brand-mark" aria-hidden="true">H</span>
+        <span class="hatket-brand-copy">
+          <strong>햇켓</strong>
+          <small>HATKET</small>
+        </span>
+      </a>
+
+      {% if session.get('user_id') %}
+      <form action="{{ url_for('dashboard') }}" method="get" class="hatket-search-form" role="search">
+        <label for="hatket-search-input" class="hatket-sr-only">상품 검색</label>
+        <input id="hatket-search-input" type="search" name="q"
+               value="{{ request.args.get('q', '') if request.endpoint == 'dashboard' else '' }}"
+               placeholder="상품명, 카테고리, 지역 검색" maxlength="50" autocomplete="off">
+        <button type="submit">검색</button>
+      </form>
+
+      <nav class="hatket-nav" aria-label="주요 메뉴">
+        <a href="{{ url_for('new_product') }}" class="{% if request.endpoint == 'new_product' %}active{% endif %}">상품등록</a>
+        <a href="{{ url_for('my_products') }}" class="{% if request.endpoint == 'my_products' %}active{% endif %}">내 상품</a>
+        <a href="{{ url_for('favorites') }}" class="{% if request.endpoint == 'favorites' %}active{% endif %}">찜</a>
+        <a href="{{ url_for('chat') }}" class="{% if request.endpoint == 'chat' %}active{% endif %}">채팅</a>
+        <a href="{{ url_for('friends') }}" class="{% if request.endpoint == 'friends' %}active{% endif %}">친구</a>
+        <a href="{{ url_for('transfer') }}" class="{% if request.endpoint == 'transfer' %}active{% endif %}">송금</a>
+        <a href="{{ url_for('report') }}" class="{% if request.endpoint in ['report'] %}active{% endif %}">신고</a>
+        <a href="{{ url_for('profile') }}" class="{% if request.endpoint in ['profile', 'change_password', 'blocked_management'] %}active{% endif %}">마이페이지</a>
+        <form method="post" action="{{ url_for('logout') }}" class="hatket-logout-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="hatket-logout-link">로그아웃</button>
+        </form>
+      </nav>
+      {% else %}
+      <nav class="hatket-nav hatket-guest-nav">
+        <a href="{{ url_for('login') }}">로그인</a>
+        <a href="{{ url_for('register') }}" class="hatket-register-link">회원가입</a>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="hatket-main">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+      <div class="hatket-flash-list" aria-live="polite">
+        {% for message in messages %}<div class="hatket-flash-message">{{ message }}</div>{% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
